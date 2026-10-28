@@ -86,11 +86,28 @@
   .cell.selected { outline: 2px solid var(--warn); outline-offset: -2px; }
   .cell.wall { background: repeating-linear-gradient(45deg, #2a3140, #2a3140 4px, #353e50 4px, #353e50 8px); }
   .piece {
-    width: 72%; height: 72%; border-radius: 50%;
-    box-shadow: 0 4px 10px rgba(0,0,0,.35), inset 0 1px 0 rgba(255,255,255,.2);
+    width: 78%; height: 78%; border-radius: 50%;
+    position: relative;
+    box-shadow:
+      0 6px 14px rgba(0,0,0,.45),
+      inset 0 2px 3px rgba(255,255,255,.35),
+      inset 0 -4px 8px rgba(0,0,0,.25);
   }
-  .piece.amber { background: radial-gradient(circle at 35% 30%, #ffd089, var(--amber) 55%, #8a5f28); }
-  .piece.slate { background: radial-gradient(circle at 35% 30%, #b7d4ff, var(--slate) 55%, #2f5f9e); }
+  .piece::after {
+    content: '';
+    position: absolute; inset: 18%;
+    border-radius: 50%;
+    border: 2px solid rgba(255,255,255,.2);
+    box-shadow: inset 0 0 6px rgba(0,0,0,.2);
+  }
+  .piece.amber {
+    background:
+      radial-gradient(circle at 32% 28%, #ffe2a8 0%, #f0b14a 38%, #c47a1e 72%, #7a4a12 100%);
+  }
+  .piece.slate {
+    background:
+      radial-gradient(circle at 32% 28%, #dcecff 0%, #7eb6ff 38%, #3d7fd4 72%, #1e4a8a 100%);
+  }
   .actions { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 6px; margin-bottom: 8px; }
   .act {
     border: 1px solid var(--line); background: #151a24; color: var(--text);
@@ -542,7 +559,12 @@
 
   function setMode(m){
     state.mode=m; state.selected=null;
-    ['move','push','wall'].forEach(k=>{const el=$('act-'+k);if(!el)return;el.classList.toggle('on',k===m);el.disabled=!canControl()||(k==='wall'&&countWalls(state.side)>=MAX_WALLS);});
+    ['move','push','wall'].forEach(k=>{
+      const el=$('act-'+k); if(!el) return;
+      el.classList.toggle('on', k===m);
+      // Always allow switching mode; only lock Wall at cap for current side to move
+      el.disabled = (k==='wall' && countWalls(state.side)>=MAX_WALLS);
+    });
     render();
   }
 
@@ -603,11 +625,23 @@
     else if(hit.kind==='wall')applyWall(state.selected,hit);
   }
 
+  function displayRC(r,c){
+    // Slate player sees board flipped so their pieces are at the bottom
+    if(!localMode && mySide==='slate') return { r: SIZE-1-r, c: SIZE-1-c };
+    return { r:r, c:c };
+  }
+  function fromDisplay(r,c){
+    if(!localMode && mySide==='slate') return { r: SIZE-1-r, c: SIZE-1-c };
+    return { r:r, c:c };
+  }
+
   function render(){
     const board=$('board'); board.innerHTML='';
     const legals=state.selected&&canControl()?legalMovesFor(state.selected.r,state.selected.c,state.mode):[];
     const legalSet=new Set(legals.map(x=>x.r+','+x.c));
-    for(let r=0;r<SIZE;r++)for(let c=0;c<SIZE;c++){
+    for(let dr=0;dr<SIZE;dr++)for(let dc=0;dc<SIZE;dc++){
+      const map=fromDisplay(dr,dc);
+      const r=map.r, c=map.c;
       const div=document.createElement('div'); div.className='cell';
       if(r===3&&c===3)div.classList.add('center'); else if(r===3)div.classList.add('mid');
       if(state.selected&&state.selected.r===r&&state.selected.c===c)div.classList.add('selected');
@@ -649,6 +683,14 @@
     };
     try{
       await ref.set(snap);
+      if(publicOn){
+        try {
+          await fbDb.ref('bastionPublic/'+code).set({
+            title: snap.title, hostName: snap.hostName, hostLevel: snap.hostLevel,
+            createdAt: snap.createdAt, status: 'waiting'
+          });
+        } catch(_){}
+      }
       roomCode=code; roomRef=ref; mySide='amber'; localMode=false;
       state.names.amber=user.name; state.levels.amber=levelFromXp(st.xp);
       $('wait-code').textContent=code;
@@ -675,8 +717,9 @@
     try{
       await ref.update({
         guestUid:user.uid, guestName:user.name, guestLevel:levelFromXp(st.xp),
-        status:'playing', public:false // remove from public list when full
+        status:'playing', public:false
       });
+      try { await fbDb.ref('bastionPublic/'+code).remove(); } catch(_){}
       roomCode=code; roomRef=ref; mySide='slate'; localMode=false;
       state.names.slate=user.name; state.levels.slate=levelFromXp(st.xp);
       state.names.amber=val.hostName||'Amber'; state.levels.amber=val.hostLevel||1;
@@ -699,7 +742,7 @@
     showGame(true); showScreen(''); modal('s-wait',false); modal('s-join',false); modal('s-create',false);
     $('s-lobby').classList.remove('on'); $('s-auth').classList.remove('on');
     setMode('move');
-    log('vs <strong>'+escapeHtml(mySide==='amber'?state.names.slate:state.names.amber)+'</strong> · you are <strong>'+escapeHtml(label(mySide))+'</strong>');
+    log('You are <strong>'+escapeHtml(label(mySide))+'</strong> ('+escapeHtml(user&&user.name||'')+') · vs <strong>'+escapeHtml(mySide==='amber'?state.names.slate:state.names.amber)+'</strong>');
     render();
   }
 
@@ -743,7 +786,14 @@
   async function leaveRoom(){
     showGame(false); modal('s-end',false); modal('s-wait',false);
     if(roomRef&&user){
-      try{ if(mySide==='amber') await roomRef.remove(); else await roomRef.update({guestUid:null,guestName:null,guestLevel:null,status:'waiting',public:false}); }catch(_){}
+      try{
+        if(mySide==='amber'){
+          try{ await fbDb.ref('bastionPublic/'+roomCode).remove(); }catch(_){}
+          await roomRef.remove();
+        } else {
+          await roomRef.update({guestUid:null,guestName:null,guestLevel:null,status:'waiting',public:false});
+        }
+      }catch(_){}
       try{roomRef.off();}catch(_){}
     }
     roomRef=null; roomCode=null; mySide=null; localMode=false; online=false;
@@ -763,25 +813,42 @@
     const box=$('public-list');
     if(!fbDb){ box.innerHTML='<div class="public-empty">Sign in to see public servers</div>'; return; }
     box.innerHTML='<div class="public-empty">Loading…</div>';
-    fbDb.ref('bastionRooms').orderByChild('public').equalTo(true).limitToLast(30).once('value').then(snap=>{
-      const val=snap.val()||{};
+    // Client filter (no index required). Also mirrors to public index node when creating.
+    Promise.all([
+      fbDb.ref('bastionRooms').limitToLast(50).once('value'),
+      fbDb.ref('bastionPublic').limitToLast(40).once('value')
+    ]).then(function(results){
+      const val=results[0].val()||{};
+      const pub=results[1].val()||{};
       const rows=[];
-      Object.keys(val).forEach(code=>{
-        const r=val[code];
-        if(!r||!r.public||r.status!=='waiting'||r.guestUid) return;
-        rows.push({code, title:r.title||(r.hostName+"'s room"), host:r.hostName||'Host', level:r.hostLevel||1, at:r.createdAt||0});
-      });
-      rows.sort((a,b)=>b.at-a.at);
+      const seen={};
+      function add(code, r){
+        if(!r||seen[code]) return;
+        if(r.guestUid) return;
+        if(r.status && r.status!=='waiting') return;
+        if(r.public!==true && !pub[code]) return;
+        seen[code]=1;
+        rows.push({
+          code: code,
+          title: r.title || ((r.hostName||'Host')+"'s room"),
+          host: r.hostName||'Host',
+          level: r.hostLevel||1,
+          at: r.createdAt||0
+        });
+      }
+      Object.keys(pub).forEach(function(code){ add(code, val[code]||pub[code]); });
+      Object.keys(val).forEach(function(code){ add(code, val[code]); });
+      rows.sort(function(a,b){ return b.at-a.at; });
       if(!rows.length){ box.innerHTML='<div class="public-empty">No public rooms open — create one</div>'; return; }
       box.innerHTML='';
-      rows.forEach(r=>{
+      rows.forEach(function(r){
         const div=document.createElement('div'); div.className='room-row';
         div.innerHTML='<div class="rinfo"><div class="rtitle">'+escapeHtml(r.title)+'</div><div class="rmeta">Host '+escapeHtml(r.host)+' · Lv '+r.level+' · '+r.code+'</div></div>';
         const btn=document.createElement('button'); btn.className='join-btn'; btn.textContent='Join'; btn.type='button';
-        btn.onclick=()=>joinRoom(r.code);
+        btn.onclick=function(){ joinRoom(r.code); };
         div.appendChild(btn); box.appendChild(div);
       });
-    }).catch(()=>{ box.innerHTML='<div class="public-empty">Could not load rooms</div>'; });
+    }).catch(function(){ box.innerHTML='<div class="public-empty">Could not load rooms</div>'; });
   }
 
   // Auth UI
@@ -790,19 +857,51 @@
     try{localStorage.setItem('bastion_user',JSON.stringify(user));}catch(_){}
     refreshProfile(); showScreen('s-lobby'); refreshPublicList();
   }
+  
+  async function claimUsername(uid, name){
+    const key=name.toLowerCase();
+    const ref=fbDb.ref('rampartUsernames/'+key);
+    const snap=await ref.once('value');
+    const owner=snap.val();
+    if(owner && owner.uid && owner.uid!==uid) throw new Error('taken');
+    await ref.set({ uid: uid, name: name, at: Date.now() });
+  }
+
   $('btn-google').onclick=async()=>{
     if(!initFirebase()) return toast('Firebase failed');
     try{
       const provider=new firebase.auth.GoogleAuthProvider();
       const res=await fbAuth.signInWithPopup(provider);
-      setUser(res.user.uid,(res.user.displayName||'Player').split(' ')[0].slice(0,16),false);
-    }catch(e){toast('Google sign-in failed');}
+      let name=(res.user.displayName||'Player').split(' ')[0].slice(0,16);
+      try { await claimUsername(res.user.uid, name); }
+      catch(e){
+        if(String(e.message)==='taken'){
+          name=(name+'_'+Math.random().toString(36).slice(2,5)).slice(0,16);
+          await claimUsername(res.user.uid, name);
+          toast('Display name taken — using '+name);
+        } else throw e;
+      }
+      setUser(res.user.uid,name,false);
+    }catch(e){console.warn(e);toast('Google sign-in failed');}
   };
-  $('btn-guest').onclick=()=>{
+  $('btn-guest').onclick=async()=>{
     if(!initFirebase()) return toast('Firebase failed');
     const name=($('guest-name').value||'').trim().replace(/[^\w\- ]/g,'').slice(0,16);
     if(name.length<3) return toast('Username min 3 characters');
-    fbAuth.signInAnonymously().then(cred=>setUser(cred.user.uid,name,true)).catch(()=>setUser('guest_'+Math.random().toString(36).slice(2),name,true));
+    try{
+      let uid;
+      try {
+        const cred=await fbAuth.signInAnonymously();
+        uid=cred.user.uid;
+      } catch(_) {
+        uid='guest_'+Math.random().toString(36).slice(2);
+      }
+      await claimUsername(uid, name);
+      setUser(uid, name, true);
+    }catch(e){
+      if(String(e.message)==='taken') toast('Username taken — pick another');
+      else toast('Could not claim username');
+    }
   };
   $('btn-signout').onclick=async()=>{try{if(fbAuth)await fbAuth.signOut();}catch(_){} user=null; try{localStorage.removeItem('bastion_user');}catch(_){} showScreen('s-auth');};
 
