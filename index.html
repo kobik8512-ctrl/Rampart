@@ -9,48 +9,66 @@
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-database-compat.js"></script>
 <style>
   :root {
-    --bg: #12151c; --panel: #1a1f2b; --line: #2c3548; --text: #eef2f8; --muted: #8b96ab;
-    --amber: #e8a54b; --amber-dim: #8a5f28; --slate: #6ea8ff; --slate-dim: #2f5f9e;
-    --good: #3ddc97; --warn: #ffc857; --bad: #ff6b7a;
+    --bg: #0b0e14; --panel: #141a24; --panel2: #1a2230; --line: #2a3344;
+    --text: #f0f3f8; --muted: #8b96ab; --amber: #e8a54b; --amber2: #f0c56e;
+    --slate: #6ea8ff; --good: #3ddc97; --warn: #ffc857; --bad: #ff6b7a;
   }
   * { box-sizing: border-box; margin: 0; padding: 0; }
   html, body {
     height: 100%; background: var(--bg); color: var(--text);
-    font-family: system-ui, -apple-system, Segoe UI, sans-serif;
+    font-family: system-ui, -apple-system, Segoe UI, Roboto, sans-serif;
     overflow-x: hidden; user-select: none; -webkit-user-select: none;
   }
-  #app { max-width: 520px; margin: 0 auto; min-height: 100%; display: flex; flex-direction: column; padding: 12px 12px 20px; }
+  body {
+    background:
+      radial-gradient(1200px 600px at 10% -10%, rgba(232,165,75,.12), transparent 50%),
+      radial-gradient(900px 500px at 100% 0%, rgba(110,168,255,.1), transparent 45%),
+      var(--bg);
+  }
+  #app { max-width: 520px; margin: 0 auto; min-height: 100%; display: none; flex-direction: column; padding: 12px 12px 20px; }
   header { display: flex; align-items: center; justify-content: space-between; gap: 8px; margin-bottom: 10px; }
-  .brand { font-weight: 800; letter-spacing: -0.03em; font-size: 1.15rem; }
+  .brand { font-weight: 900; letter-spacing: -0.04em; font-size: 1.25rem; }
   .brand span { color: var(--amber); }
   .hdr-actions { display: flex; gap: 6px; flex-wrap: wrap; justify-content: flex-end; }
   .btn {
-    border: 1px solid var(--line); background: var(--panel); color: var(--text);
-    border-radius: 10px; padding: 8px 12px; font-weight: 700; font-size: .82rem; cursor: pointer;
+    border: 1px solid var(--line); background: var(--panel2); color: var(--text);
+    border-radius: 12px; padding: 11px 14px; font-weight: 700; font-size: .86rem; cursor: pointer;
   }
   .btn:active { transform: scale(0.98); }
   .btn:disabled { opacity: .4; cursor: not-allowed; }
-  .btn-help { border-color: var(--slate-dim); color: var(--slate); }
-  .btn-primary { background: linear-gradient(120deg, #c8892f, #e8a54b); border: none; color: #1a1208; }
+  .btn-help { color: var(--slate); border-color: #2a3d5c; }
+  .btn-primary {
+    background: linear-gradient(135deg, #d4922a, #e8a54b 40%, #f0c56e);
+    border: none; color: #1a1208; font-weight: 800;
+    box-shadow: 0 8px 24px rgba(232,165,75,.25);
+  }
   .btn-google { background: #fff; color: #222; border: none; }
-  .btn-danger { border-color: #5a3038; color: var(--bad); }
+  .btn-danger { border-color: #5a3038; color: var(--bad); background: rgba(255,107,122,.06); }
+  .btn-ghost { background: transparent; }
   .status { display: grid; grid-template-columns: 1fr auto 1fr; gap: 8px; margin-bottom: 10px; }
-  .player-card { background: var(--panel); border: 1px solid var(--line); border-radius: 14px; padding: 10px 12px; }
-  .player-card.active { box-shadow: 0 0 0 2px var(--warn); }
-  .player-card.amber.active { box-shadow: 0 0 0 2px var(--amber); }
-  .player-card.slate.active { box-shadow: 0 0 0 2px var(--slate); }
-  .player-card .name { font-size: .72rem; text-transform: uppercase; letter-spacing: .06em; color: var(--muted); }
+  .player-card {
+    background: var(--panel); border: 1px solid var(--line); border-radius: 14px; padding: 10px 12px;
+    min-width: 0;
+  }
+  .player-card.active.amber { box-shadow: 0 0 0 2px var(--amber); }
+  .player-card.active.slate { box-shadow: 0 0 0 2px var(--slate); }
+  .player-card .name { font-size: .68rem; text-transform: uppercase; letter-spacing: .07em; color: var(--muted); }
   .player-card.amber .name { color: var(--amber); }
   .player-card.slate .name { color: var(--slate); }
-  .player-card .score { font-size: 1.45rem; font-weight: 800; font-variant-numeric: tabular-nums; }
-  .player-card .meta { font-size: .72rem; color: var(--muted); margin-top: 2px; word-break: break-word; }
-  .turn-box { align-self: center; text-align: center; min-width: 70px; }
+  .player-card .who { font-weight: 800; font-size: .95rem; margin-top: 2px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .player-card .score { font-size: 1.35rem; font-weight: 800; font-variant-numeric: tabular-nums; }
+  .player-card .meta { font-size: .7rem; color: var(--muted); margin-top: 2px; }
+  .lvl-pill {
+    display: inline-block; font-size: .65rem; font-weight: 800; padding: 2px 7px;
+    border-radius: 99px; background: rgba(232,165,75,.15); color: var(--amber); margin-left: 4px;
+  }
+  .turn-box { align-self: center; text-align: center; min-width: 64px; }
   .turn-box b { display: block; font-size: 1.1rem; }
-  .turn-box span { font-size: .68rem; color: var(--muted); text-transform: uppercase; letter-spacing: .05em; }
+  .turn-box span { font-size: .65rem; color: var(--muted); text-transform: uppercase; letter-spacing: .05em; }
   .room-bar {
     background: var(--panel); border: 1px solid var(--line); border-radius: 12px;
     padding: 8px 10px; margin-bottom: 8px; display: flex; align-items: center; gap: 8px; flex-wrap: wrap;
-    font-size: .8rem; color: var(--muted);
+    font-size: .78rem; color: var(--muted);
   }
   .room-bar code {
     background: #10151e; border: 1px solid var(--line); border-radius: 8px;
@@ -59,7 +77,7 @@
   .board-wrap { background: var(--panel); border: 1px solid var(--line); border-radius: 16px; padding: 10px; margin-bottom: 10px; }
   .board { display: grid; grid-template-columns: repeat(7, 1fr); gap: 4px; aspect-ratio: 1; }
   .cell {
-    position: relative; border-radius: 10px; background: #151a24; border: 1px solid #222a3a;
+    border-radius: 10px; background: #151a24; border: 1px solid #222a3a;
     display: flex; align-items: center; justify-content: center; cursor: pointer; aspect-ratio: 1;
   }
   .cell.mid { background: #182030; }
@@ -71,8 +89,8 @@
     width: 72%; height: 72%; border-radius: 50%;
     box-shadow: 0 4px 10px rgba(0,0,0,.35), inset 0 1px 0 rgba(255,255,255,.2);
   }
-  .piece.amber { background: radial-gradient(circle at 35% 30%, #ffd089, var(--amber) 55%, var(--amber-dim)); }
-  .piece.slate { background: radial-gradient(circle at 35% 30%, #b7d4ff, var(--slate) 55%, var(--slate-dim)); }
+  .piece.amber { background: radial-gradient(circle at 35% 30%, #ffd089, var(--amber) 55%, #8a5f28); }
+  .piece.slate { background: radial-gradient(circle at 35% 30%, #b7d4ff, var(--slate) 55%, #2f5f9e); }
   .actions { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 6px; margin-bottom: 8px; }
   .act {
     border: 1px solid var(--line); background: #151a24; color: var(--text);
@@ -86,136 +104,282 @@
     padding: 10px 12px; min-height: 52px; font-size: .82rem; color: var(--muted); line-height: 1.35;
   }
   .log strong { color: var(--text); }
+
+  /* Screens */
   .screen {
-    position: fixed; inset: 0; background: rgba(8,10,14,.9);
-    display: none; align-items: center; justify-content: center; padding: 16px; z-index: 30; overflow-y: auto;
+    position: fixed; inset: 0; display: none; align-items: stretch; justify-content: center;
+    padding: 0; z-index: 30; overflow-y: auto;
   }
   .screen.on { display: flex; }
-  .card {
-    width: min(420px, 100%); background: var(--panel); border: 1px solid var(--line);
-    border-radius: 18px; padding: 18px 16px;
+  .screen-inner {
+    width: min(440px, 100%); margin: 0 auto; min-height: 100%;
+    display: flex; flex-direction: column; padding: 20px 16px 28px;
   }
-  .card h1 { font-size: 1.4rem; margin-bottom: 6px; letter-spacing: -0.03em; }
+  .hero {
+    text-align: center; padding: 28px 8px 18px;
+  }
+  .logo-mark {
+    width: 72px; height: 72px; margin: 0 auto 14px; border-radius: 20px;
+    background: linear-gradient(145deg, #2a3348, #151a22);
+    border: 1px solid var(--line);
+    display: flex; align-items: center; justify-content: center;
+    box-shadow: 0 16px 40px rgba(0,0,0,.35), 0 0 0 1px rgba(232,165,75,.15);
+    font-weight: 900; font-size: 1.5rem; letter-spacing: -0.05em;
+    background-image: linear-gradient(145deg, #2a3348, #151a22), linear-gradient(120deg, var(--amber), var(--slate));
+    color: var(--amber);
+  }
+  .hero h1 {
+    font-size: 2rem; font-weight: 900; letter-spacing: -0.04em;
+    background: linear-gradient(120deg, #fff 20%, #e8a54b 90%);
+    -webkit-background-clip: text; background-clip: text; color: transparent;
+  }
+  .hero p { color: var(--muted); font-size: .9rem; margin-top: 6px; line-height: 1.4; }
+
+  .profile-card {
+    background: var(--panel); border: 1px solid var(--line); border-radius: 18px;
+    padding: 14px 16px; display: flex; align-items: center; gap: 12px; margin-bottom: 14px;
+  }
+  .avatar {
+    width: 52px; height: 52px; border-radius: 16px;
+    background: linear-gradient(135deg, #e8a54b, #6ea8ff);
+    display: flex; align-items: center; justify-content: center;
+    font-weight: 900; font-size: 1.2rem; color: #111; flex-shrink: 0;
+  }
+  .profile-card .info { min-width: 0; flex: 1; }
+  .profile-card .uname { font-weight: 800; font-size: 1.05rem; }
+  .profile-card .stats { font-size: .78rem; color: var(--muted); margin-top: 2px; }
+  .xp-bar {
+    height: 6px; background: #10151e; border-radius: 99px; margin-top: 8px; overflow: hidden;
+  }
+  .xp-bar > i { display: block; height: 100%; background: linear-gradient(90deg, var(--amber), #f0c56e); border-radius: 99px; width: 0%; }
+
+  .menu-grid { display: grid; gap: 10px; }
+  .menu-btn {
+    width: 100%; text-align: left; padding: 16px 16px; border-radius: 16px;
+    border: 1px solid var(--line); background: var(--panel); color: var(--text);
+    cursor: pointer; display: flex; align-items: center; gap: 14px;
+  }
+  .menu-btn:active { transform: scale(0.99); }
+  .menu-btn.primary {
+    background: linear-gradient(135deg, rgba(232,165,75,.18), rgba(232,165,75,.05));
+    border-color: rgba(232,165,75,.35);
+  }
+  .menu-ico {
+    width: 44px; height: 44px; border-radius: 12px; background: #10151e;
+    display: flex; align-items: center; justify-content: center; font-size: 1.25rem; flex-shrink: 0;
+  }
+  .menu-btn strong { display: block; font-size: .95rem; }
+  .menu-btn span { display: block; font-size: .75rem; color: var(--muted); margin-top: 2px; font-weight: 600; }
+
+  .section-title {
+    font-size: .72rem; text-transform: uppercase; letter-spacing: .08em; color: var(--muted);
+    margin: 18px 0 8px; font-weight: 700;
+  }
+  .public-list {
+    display: flex; flex-direction: column; gap: 8px; max-height: 42vh; overflow-y: auto;
+  }
+  .public-empty {
+    text-align: center; color: var(--muted); font-size: .85rem; padding: 20px 10px;
+    border: 1px dashed var(--line); border-radius: 14px;
+  }
+  .room-row {
+    background: var(--panel); border: 1px solid var(--line); border-radius: 14px;
+    padding: 12px 12px; display: flex; align-items: center; gap: 10px;
+  }
+  .room-row .rinfo { flex: 1; min-width: 0; }
+  .room-row .rtitle { font-weight: 800; font-size: .92rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .room-row .rmeta { font-size: .72rem; color: var(--muted); margin-top: 2px; }
+  .room-row .join-btn {
+    border: none; border-radius: 10px; padding: 10px 14px; font-weight: 800; font-size: .8rem;
+    background: linear-gradient(135deg, #d4922a, #e8a54b); color: #1a1208; cursor: pointer; flex-shrink: 0;
+  }
+
+  .card {
+    background: var(--panel); border: 1px solid var(--line); border-radius: 18px; padding: 18px 16px;
+  }
+  .card h1 { font-size: 1.35rem; margin-bottom: 6px; letter-spacing: -0.03em; }
   .card h2 { font-size: 1rem; margin: 14px 0 6px; color: var(--warn); }
   .card p, .card li { color: var(--muted); font-size: .88rem; line-height: 1.45; }
-  .card ul { padding-left: 18px; margin-bottom: 6px; }
+  .card ul { padding-left: 18px; }
   .card .row { display: flex; gap: 8px; margin-top: 12px; flex-wrap: wrap; }
   .card .row .btn { flex: 1; min-width: 120px; }
   .field { margin-top: 10px; text-align: left; }
   .field label { display: block; font-size: .72rem; color: var(--muted); margin-bottom: 4px; text-transform: uppercase; letter-spacing: .05em; }
-  .field input {
+  .field input, .field select {
     width: 100%; border: 1px solid var(--line); background: #10151e; color: var(--text);
-    border-radius: 10px; padding: 12px; font-size: 1rem; font-weight: 700;
+    border-radius: 12px; padding: 13px; font-size: 1rem; font-weight: 700;
   }
+  .toggle-row {
+    display: flex; align-items: center; justify-content: space-between; gap: 10px;
+    margin-top: 12px; padding: 12px; background: #10151e; border-radius: 12px; border: 1px solid var(--line);
+  }
+  .toggle-row span { font-size: .88rem; font-weight: 700; }
+  .switch {
+    width: 48px; height: 28px; border-radius: 99px; background: #2a3344; position: relative; cursor: pointer; border: none;
+  }
+  .switch.on { background: #c8892f; }
+  .switch i {
+    position: absolute; top: 3px; left: 3px; width: 22px; height: 22px; border-radius: 50%;
+    background: #fff; transition: left .15s;
+  }
+  .switch.on i { left: 23px; }
   .help-body { max-height: 55vh; overflow-y: auto; text-align: left; }
   .toast {
     position: fixed; left: 50%; bottom: 24px; transform: translateX(-50%);
     background: #222938; border: 1px solid var(--line); color: var(--text);
     padding: 10px 14px; border-radius: 12px; font-size: .85rem; font-weight: 700;
-    opacity: 0; pointer-events: none; transition: opacity .25s; z-index: 40; max-width: 90%;
+    opacity: 0; pointer-events: none; transition: opacity .25s; z-index: 50; max-width: 90%;
   }
   .toast.on { opacity: 1; }
-  .online-dot { display: inline-block; width: 8px; height: 8px; border-radius: 50%; background: var(--good); margin-right: 4px; }
-  .online-dot.off { background: var(--bad); }
-  .mode-pills { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-top: 12px; }
-  .mode-pills button { padding: 14px 10px; }
-  .waiting {
-    text-align: center; padding: 18px 10px; color: var(--muted); font-size: .9rem;
+  .waiting { text-align: center; padding: 10px 0; }
+  .waiting code { color: var(--warn); font-size: 1.6rem; letter-spacing: .18em; font-weight: 900; }
+  .modal-dim {
+    position: fixed; inset: 0; background: rgba(6,8,12,.82); display: none;
+    align-items: center; justify-content: center; padding: 16px; z-index: 40;
   }
-  .waiting code { color: var(--warn); font-size: 1.4rem; letter-spacing: .15em; }
+  .modal-dim.on { display: flex; }
 </style>
 </head>
 <body>
-<div id="app" style="display:none">
+
+<div id="app">
   <header>
-    <div class="brand">Rampart</div>
+    <div class="brand">Ram<span>part</span></div>
     <div class="hdr-actions">
       <button class="btn btn-help" id="btn-help" type="button">Help</button>
       <button class="btn" id="btn-invite" type="button">Invite</button>
       <button class="btn btn-danger" id="btn-leave" type="button">Leave</button>
     </div>
   </header>
-
   <div class="room-bar" id="room-bar">
-    <span><span class="online-dot" id="net-dot"></span><span id="net-label">Connecting…</span></span>
+    <span id="net-label">Online</span>
     <span>Room <code id="room-code-show">————</code></span>
-    <span id="you-label">You: —</span>
   </div>
-
   <div class="status">
     <div class="player-card amber" id="card-amber">
-      <div class="name">Amber</div>
+      <div class="name">Amber · you/host</div>
+      <div class="who" id="who-amber">—</div>
       <div class="score" id="score-amber">0</div>
       <div class="meta" id="meta-amber">—</div>
     </div>
-    <div class="turn-box">
-      <b id="turn-num">1</b>
-      <span>Turn / 40</span>
-    </div>
+    <div class="turn-box"><b id="turn-num">1</b><span>Turn / 40</span></div>
     <div class="player-card slate" id="card-slate">
-      <div class="name">Slate</div>
+      <div class="name">Slate · opponent</div>
+      <div class="who" id="who-slate">—</div>
       <div class="score" id="score-slate">0</div>
       <div class="meta" id="meta-slate">—</div>
     </div>
   </div>
-
   <div class="actions">
     <button class="act on" id="act-move" type="button">Move<small>1 step</small></button>
-    <button class="act" id="act-push" type="button">Push<small>shove enemy</small></button>
-    <button class="act" id="act-wall" type="button">Wall<small>block a square</small></button>
+    <button class="act" id="act-push" type="button">Push<small>shove</small></button>
+    <button class="act" id="act-wall" type="button">Wall<small>block</small></button>
   </div>
-
-  <div class="board-wrap">
-    <div class="board" id="board"></div>
-  </div>
-  <div class="log" id="log">Loading…</div>
+  <div class="board-wrap"><div class="board" id="board"></div></div>
+  <div class="log" id="log">—</div>
 </div>
 
 <!-- AUTH -->
 <div class="screen on" id="s-auth">
-  <div class="card">
-    <h1>Rampart</h1>
-    <p>Online 2-player strategy. Sign in to create or join a room.</p>
-    <div class="row">
-      <button class="btn btn-google" id="btn-google" type="button">Continue with Google</button>
+  <div class="screen-inner">
+    <div class="hero">
+      <div class="logo-mark">R</div>
+      <h1>Rampart</h1>
+      <p>2-player strategy. Walls, pushes, and position. Online or local.</p>
     </div>
-    <div class="field">
-      <label>Or play as guest — username</label>
-      <input id="guest-name" maxlength="16" placeholder="3–16 letters / numbers" autocomplete="username"/>
+    <div class="menu-grid">
+      <button class="menu-btn primary" id="btn-google" type="button">
+        <div class="menu-ico">G</div>
+        <div><strong>Continue with Google</strong><span>Sync level &amp; matches</span></div>
+      </button>
     </div>
-    <div class="row">
-      <button class="btn btn-primary" id="btn-guest" type="button">Continue as guest</button>
+    <div class="section-title">Or guest</div>
+    <div class="field"><label>Username</label>
+      <input id="guest-name" maxlength="16" placeholder="3–16 characters"/>
     </div>
-    <p style="margin-top:12px;font-size:.75rem">Same Firebase project as Go Live / Pulse. Needs internet.</p>
+    <div style="margin-top:10px">
+      <button class="btn btn-primary" id="btn-guest" type="button" style="width:100%">Continue as guest</button>
+    </div>
   </div>
 </div>
 
 <!-- LOBBY -->
 <div class="screen" id="s-lobby">
-  <div class="card">
-    <h1>Lobby</h1>
-    <p id="lobby-hello">Signed in</p>
-    <div class="mode-pills">
-      <button class="btn btn-primary" id="btn-create" type="button">Create room</button>
-      <button class="btn" id="btn-join-open" type="button">Join room</button>
+  <div class="screen-inner">
+    <div class="hero" style="padding-top:12px;padding-bottom:8px">
+      <h1 style="font-size:1.6rem">Rampart</h1>
+      <p>Pick a match</p>
     </div>
-    <div class="mode-pills">
-      <button class="btn" id="btn-local" type="button">Local hotseat</button>
-      <button class="btn btn-help" id="btn-lobby-help" type="button">Help</button>
+
+    <div class="profile-card">
+      <div class="avatar" id="prof-avatar">K</div>
+      <div class="info">
+        <div class="uname" id="prof-name">Player <span class="lvl-pill" id="prof-lvl">Lv 1</span></div>
+        <div class="stats" id="prof-stats">0 W · 0 L · 0 XP</div>
+        <div class="xp-bar"><i id="prof-xp"></i></div>
+      </div>
     </div>
-    <div class="row">
-      <button class="btn btn-danger" id="btn-signout" type="button">Sign out</button>
+
+    <div class="menu-grid">
+      <button class="menu-btn primary" id="btn-create" type="button">
+        <div class="menu-ico">＋</div>
+        <div><strong>Create room</strong><span>Private code or public listing</span></div>
+      </button>
+      <button class="menu-btn" id="btn-join-open" type="button">
+        <div class="menu-ico">⤵</div>
+        <div><strong>Join with code</strong><span>Enter a 6-letter invite</span></div>
+      </button>
+      <button class="menu-btn" id="btn-local" type="button">
+        <div class="menu-ico">⇄</div>
+        <div><strong>Local hotseat</strong><span>One device, pass and play</span></div>
+      </button>
+    </div>
+
+    <div class="section-title">Public servers <button class="btn" id="btn-refresh-public" type="button" style="padding:4px 8px;font-size:.7rem;margin-left:6px">Refresh</button></div>
+    <div class="public-list" id="public-list">
+      <div class="public-empty">Loading public rooms…</div>
+    </div>
+
+    <div class="menu-grid" style="margin-top:16px">
+      <button class="menu-btn" id="btn-lobby-help" type="button">
+        <div class="menu-ico">?</div>
+        <div><strong>How to play</strong><span>Rules &amp; scoring</span></div>
+      </button>
+      <button class="menu-btn" id="btn-signout" type="button">
+        <div class="menu-ico">⎋</div>
+        <div><strong>Sign out</strong><span>Switch account</span></div>
+      </button>
     </div>
   </div>
 </div>
 
-<!-- JOIN -->
-<div class="screen" id="s-join">
-  <div class="card">
-    <h1>Join room</h1>
+<!-- CREATE -->
+<div class="modal-dim" id="s-create">
+  <div class="card" style="width:min(400px,100%)">
+    <h1>Create room</h1>
+    <p>Host plays as Amber. Guest joins as Sierra… Slate.</p>
+    <div class="toggle-row">
+      <span>Public server (listed for anyone)</span>
+      <button type="button" class="switch" id="sw-public"><i></i></button>
+    </div>
+    <div class="field" id="room-title-field" style="display:none">
+      <label>Server name</label>
+      <input id="room-title" maxlength="28" placeholder="e.g. Kobi's table"/>
+    </div>
+    <div class="row">
+      <button class="btn" id="create-cancel" type="button">Cancel</button>
+      <button class="btn btn-primary" id="create-go" type="button">Create</button>
+    </div>
+  </div>
+</div>
+
+<!-- JOIN CODE -->
+<div class="modal-dim" id="s-join">
+  <div class="card" style="width:min(400px,100%)">
+    <h1>Join with code</h1>
     <div class="field">
       <label>Invite code</label>
-      <input id="join-code" maxlength="6" placeholder="e.g. K7QX2M" style="text-transform:uppercase;letter-spacing:.12em"/>
+      <input id="join-code" maxlength="6" placeholder="K7QX2M" style="text-transform:uppercase;letter-spacing:.12em"/>
     </div>
     <div class="row">
       <button class="btn" id="join-back" type="button">Back</button>
@@ -224,61 +388,48 @@
   </div>
 </div>
 
-<!-- WAITING HOST -->
-<div class="screen" id="s-wait">
-  <div class="card">
+<!-- WAIT -->
+<div class="modal-dim" id="s-wait">
+  <div class="card" style="width:min(400px,100%)">
     <h1>Room ready</h1>
     <div class="waiting">
-      <p>Share this code</p>
-      <p><code id="wait-code">————</code></p>
-      <p style="margin-top:10px">Or send the invite link</p>
-      <p style="margin-top:8px"><button class="btn btn-primary" id="btn-copy-link" type="button">Copy invite link</button></p>
-      <p style="margin-top:14px" id="wait-status">Waiting for opponent…</p>
+      <p style="margin-bottom:6px">Invite code</p>
+      <code id="wait-code">————</code>
+      <p style="margin-top:12px" id="wait-public-note"></p>
+      <p style="margin-top:12px"><button class="btn btn-primary" id="btn-copy-link" type="button">Copy invite link</button></p>
+      <p style="margin-top:14px;color:var(--muted)" id="wait-status">Waiting for opponent…</p>
     </div>
-    <div class="row">
-      <button class="btn btn-danger" id="wait-cancel" type="button">Cancel room</button>
-    </div>
+    <div class="row"><button class="btn btn-danger" id="wait-cancel" type="button">Cancel room</button></div>
   </div>
 </div>
 
-<div class="screen" id="s-help">
-  <div class="card">
+<div class="modal-dim" id="s-help">
+  <div class="card" style="width:min(400px,100%)">
     <h1>How to play</h1>
     <div class="help-body">
-      <h2>Online</h2>
+      <h2>Win</h2>
+      <p>Highest score after 40 turns, or capture all enemy pieces.</p>
       <ul>
-        <li><strong>Create room</strong> — you are host (Amber). Share the 6-letter code or invite link.</li>
-        <li><strong>Join room</strong> — enter the code. You play as Slate.</li>
-        <li>Only the player whose turn it is can move. The board syncs live.</li>
-        <li>If someone leaves, the room closes.</li>
+        <li>+2 per piece · +3 if in enemy half · +2 center · +1 per wall</li>
       </ul>
-      <h2>Goal</h2>
-      <p>Highest score after <strong>40 turns</strong>, or capture all enemy pieces.</p>
+      <h2>Actions</h2>
       <ul>
-        <li>+2 per piece alive</li>
-        <li>+3 if that piece is in the enemy half</li>
-        <li>+2 for holding the center</li>
-        <li>+1 per wall you own</li>
+        <li>Move — one step · Push — shove/capture · Wall — block (max 5)</li>
       </ul>
-      <h2>Actions (one per turn)</h2>
-      <ul>
-        <li><strong>Move</strong> — one orthogonal step to empty square</li>
-        <li><strong>Push</strong> — shove adjacent enemy; if blocked behind, capture them</li>
-        <li><strong>Wall</strong> — place a wall on adjacent empty square (max 5)</li>
-      </ul>
-      <h2>Local</h2>
-      <p>Hotseat on one device — pass the phone each turn.</p>
+      <h2>Levels</h2>
+      <p>Win = +40 XP · Loss = +12 XP · Level up every 100 XP.</p>
+      <h2>Public servers</h2>
+      <p>Create a public room to list it. Anyone can Join from the lobby list.</p>
     </div>
     <div class="row"><button class="btn btn-primary" id="help-close" type="button">Got it</button></div>
   </div>
 </div>
 
-<div class="screen" id="s-end">
-  <div class="card">
+<div class="modal-dim" id="s-end">
+  <div class="card" style="width:min(400px,100%)">
     <h1 id="end-title">Match over</h1>
     <p id="end-body">—</p>
     <div class="row">
-      <button class="btn btn-help" id="end-help" type="button">Help</button>
       <button class="btn btn-primary" id="end-lobby" type="button">Lobby</button>
     </div>
   </div>
@@ -287,116 +438,79 @@
 <div class="toast" id="toast"></div>
 
 <script>
-(function () {
-  const SIZE = 7, MAX_TURNS = 40, MAX_WALLS = 5;
-  const FIREBASE_CONFIG = {
-    apiKey: "AIzaSyDaQ06E5Zvj6M9XnqOpWgmUsbe5T_EnaPo",
-    authDomain: "golive-ff5ad.firebaseapp.com",
-    projectId: "golive-ff5ad",
-    storageBucket: "golive-ff5ad.firebasestorage.app",
-    messagingSenderId: "1",
-    appId: "1",
-    databaseURL: "https://golive-ff5ad-default-rtdb.firebaseio.com"
+(function(){
+  const SIZE=7, MAX_TURNS=40, MAX_WALLS=5, XP_PER_LEVEL=100;
+  const FIREBASE_CONFIG={
+    apiKey:"AIzaSyDaQ06E5Zvj6M9XnqOpWgmUsbe5T_EnaPo",
+    authDomain:"golive-ff5ad.firebaseapp.com",
+    projectId:"golive-ff5ad",
+    storageBucket:"golive-ff5ad.firebasestorage.app",
+    messagingSenderId:"1", appId:"1",
+    databaseURL:"https://golive-ff5ad-default-rtdb.firebaseio.com"
+  };
+  const $=id=>document.getElementById(id);
+  let fbAuth=null, fbDb=null, user=null, roomCode=null, roomRef=null, mySide=null;
+  let online=false, localMode=false, applyingRemote=false, publicOn=false;
+  let publicListener=null;
+
+  const state={
+    grid:[], turn:0, side:'amber', mode:'move', selected:null, over:false,
+    names:{amber:'Amber',slate:'Slate'},
+    levels:{amber:1,slate:1}
   };
 
-  const $ = (id) => document.getElementById(id);
-  let fbAuth = null, fbDb = null;
-  let user = null; // { uid, name, isGuest }
-  let roomCode = null;
-  let roomRef = null;
-  let roomUnsub = null;
-  let mySide = null; // amber | slate | null for local
-  let online = false;
-  let localMode = false;
-  let applyingRemote = false;
-
-  const state = {
-    grid: [], turn: 0, side: 'amber', mode: 'move', selected: null, over: false,
-    names: { amber: 'Amber', slate: 'Slate' }
-  };
-
-  function toast(msg) {
-    const t = $('toast');
-    t.textContent = msg;
-    t.classList.add('on');
-    clearTimeout(toast._tm);
-    toast._tm = setTimeout(() => t.classList.remove('on'), 1800);
+  function toast(msg){const t=$('toast');t.textContent=msg;t.classList.add('on');clearTimeout(toast._tm);toast._tm=setTimeout(()=>t.classList.remove('on'),1800);}
+  function showScreen(id){
+    ['s-auth','s-lobby'].forEach(s=>$(s).classList.toggle('on', s===id));
   }
-  function show(id) {
-    ['s-auth','s-lobby','s-join','s-wait','s-help','s-end'].forEach((s) => $(s).classList.toggle('on', s === id));
-  }
-  function showGame(on) {
-    $('app').style.display = on ? 'flex' : 'none';
-  }
+  function modal(id,on){ $(id).classList.toggle('on', !!on); }
+  function showGame(on){ $('app').style.display=on?'flex':'none'; }
 
-  function initFirebase() {
-    try {
-      if (typeof firebase === 'undefined') return false;
-      if (!firebase.apps.length) firebase.initializeApp(FIREBASE_CONFIG);
-      fbAuth = firebase.auth();
-      fbDb = firebase.database();
-      return true;
-    } catch (e) {
-      console.warn(e);
-      return false;
-    }
+  function levelFromXp(xp){ return Math.floor((xp||0)/XP_PER_LEVEL)+1; }
+  function xpProgress(xp){ return ((xp||0)%XP_PER_LEVEL)/XP_PER_LEVEL; }
+  function loadStats(uid){
+    try{ return JSON.parse(localStorage.getItem('rampart_stats_'+uid)||'null')||{xp:0,wins:0,losses:0}; }catch(_){ return {xp:0,wins:0,losses:0}; }
+  }
+  function saveStats(uid, st){ try{ localStorage.setItem('rampart_stats_'+uid, JSON.stringify(st)); }catch(_){ } }
+  async function syncStatsCloud(st){
+    if(!fbDb||!user||user.isGuest) return;
+    try{ await fbDb.ref('rampartUsers/'+user.uid).update({ name:user.name, xp:st.xp, wins:st.wins, losses:st.losses, level:levelFromXp(st.xp), updatedAt:Date.now() }); }catch(_){}
+  }
+  function refreshProfile(){
+    if(!user) return;
+    const st=loadStats(user.uid);
+    $('prof-name').innerHTML=escapeHtml(user.name)+' <span class="lvl-pill">Lv '+levelFromXp(st.xp)+'</span>';
+    $('prof-stats').textContent=st.wins+' W · '+st.losses+' L · '+st.xp+' XP';
+    $('prof-avatar').textContent=(user.name||'?').charAt(0).toUpperCase();
+    $('prof-xp').style.width=Math.round(xpProgress(st.xp)*100)+'%';
+  }
+  function grantMatchResult(won){
+    if(!user) return;
+    const st=loadStats(user.uid);
+    st.xp+=(won?40:12);
+    if(won) st.wins++; else st.losses++;
+    saveStats(user.uid, st);
+    syncStatsCloud(st);
+    refreshProfile();
   }
 
-  function emptyGrid() {
-    const g = [];
-    for (let r = 0; r < SIZE; r++) {
-      const row = [];
-      for (let c = 0; c < SIZE; c++) row.push(null);
-      g.push(row);
-    }
+  function initFirebase(){
+    try{
+      if(typeof firebase==='undefined') return false;
+      if(!firebase.apps.length) firebase.initializeApp(FIREBASE_CONFIG);
+      fbAuth=firebase.auth(); fbDb=firebase.database(); return true;
+    }catch(e){ return false; }
+  }
+
+  function emptyGrid(){const g=[];for(let r=0;r<SIZE;r++){const row=[];for(let c=0;c<SIZE;c++)row.push(null);g.push(row);}return g;}
+  function freshGrid(){
+    const g=emptyGrid();
+    [[6,1],[6,2],[6,3],[6,4],[6,5],[5,3]].forEach(([r,c])=>g[r][c]={type:'piece',side:'amber'});
+    [[0,1],[0,2],[0,3],[0,4],[0,5],[1,3]].forEach(([r,c])=>g[r][c]={type:'piece',side:'slate'});
     return g;
   }
-
-  function freshGrid() {
-    const g = emptyGrid();
-    [[6,1],[6,2],[6,3],[6,4],[6,5],[5,3]].forEach(([r,c]) => { g[r][c] = { type: 'piece', side: 'amber' }; });
-    [[0,1],[0,2],[0,3],[0,4],[0,5],[1,3]].forEach(([r,c]) => { g[r][c] = { type: 'piece', side: 'slate' }; });
-    return g;
-  }
-
-  function packGrid(g) {
-    // Firebase-friendly: array of rows with null as 0, pieces as A/S, walls as a/s
-    return g.map((row) => row.map((x) => {
-      if (!x) return 0;
-      if (x.type === 'wall') return x.side === 'amber' ? 'a' : 's';
-      return x.side === 'amber' ? 'A' : 'S';
-    }));
-  }
-  function unpackGrid(p) {
-    if (!p || !p.length) return freshGrid();
-    return p.map((row) => row.map((x) => {
-      if (!x) return null;
-      if (x === 'A') return { type: 'piece', side: 'amber' };
-      if (x === 'S') return { type: 'piece', side: 'slate' };
-      if (x === 'a') return { type: 'wall', side: 'amber' };
-      if (x === 's') return { type: 'wall', side: 'slate' };
-      return null;
-    }));
-  }
-
-  function setupLocal() {
-    localMode = true;
-    online = false;
-    roomCode = null;
-    mySide = null;
-    state.grid = freshGrid();
-    state.turn = 0;
-    state.side = 'amber';
-    state.mode = 'move';
-    state.selected = null;
-    state.over = false;
-    state.names = { amber: (user && user.name) || 'Amber', slate: 'Player 2' };
-    showGame(true);
-    ['s-auth','s-lobby','s-join','s-wait','s-end'].forEach((s) => $(s).classList.remove('on'));
-    setMode('move');
-    log('Local hotseat. <strong>Amber</strong> starts.');
-    render();
-  }
+  function packGrid(g){return g.map(row=>row.map(x=>{if(!x)return 0;if(x.type==='wall')return x.side==='amber'?'a':'s';return x.side==='amber'?'A':'S';}));}
+  function unpackGrid(p){if(!p||!p.length)return freshGrid();return p.map(row=>row.map(x=>{if(!x)return null;if(x==='A')return{type:'piece',side:'amber'};if(x==='S')return{type:'piece',side:'slate'};if(x==='a')return{type:'wall',side:'amber'};if(x==='s')return{type:'wall',side:'slate'};return null;}));}
 
   function inBounds(r,c){return r>=0&&c>=0&&r<SIZE&&c<SIZE;}
   function cell(r,c){return state.grid[r][c];}
@@ -414,144 +528,79 @@
     return score;
   }
   function legalMovesFor(r,c,mode){
-    const out=[];
-    if(!isPiece(r,c,state.side)) return out;
-    if(mode==='move'){
-      dirs().forEach(([dr,dc])=>{const nr=r+dr,nc=c+dc;if(isEmpty(nr,nc))out.push({r:nr,c:nc,kind:'move'});});
-    } else if(mode==='push'){
-      dirs().forEach(([dr,dc])=>{
-        const er=r+dr,ec=c+dc;
-        if(!isPiece(er,ec)||isPiece(er,ec,state.side))return;
-        out.push({r:er,c:ec,kind:'push',dr,dc});
-      });
-    } else if(mode==='wall'){
-      if(countWalls(state.side)>=MAX_WALLS)return out;
-      dirs().forEach(([dr,dc])=>{const nr=r+dr,nc=c+dc;if(isEmpty(nr,nc))out.push({r:nr,c:nc,kind:'wall'});});
-    }
+    const out=[]; if(!isPiece(r,c,state.side)) return out;
+    if(mode==='move') dirs().forEach(([dr,dc])=>{const nr=r+dr,nc=c+dc;if(isEmpty(nr,nc))out.push({r:nr,c:nc,kind:'move'});});
+    else if(mode==='push') dirs().forEach(([dr,dc])=>{const er=r+dr,ec=c+dc;if(!isPiece(er,ec)||isPiece(er,ec,state.side))return;out.push({r:er,c:ec,kind:'push',dr,dc});});
+    else if(mode==='wall'){ if(countWalls(state.side)>=MAX_WALLS)return out; dirs().forEach(([dr,dc])=>{const nr=r+dr,nc=c+dc;if(isEmpty(nr,nc))out.push({r:nr,c:nc,kind:'wall'});});}
     return out;
   }
-  function anyLegal(side){
-    const saved=state.side;state.side=side;let ok=false;
-    outer:for(let r=0;r<SIZE;r++)for(let c=0;c<SIZE;c++){
-      if(!isPiece(r,c,side))continue;
-      if(legalMovesFor(r,c,'move').length||legalMovesFor(r,c,'push').length||legalMovesFor(r,c,'wall').length){ok=true;break outer;}
-    }
-    state.side=saved;return ok;
-  }
+  function anyLegal(side){const saved=state.side;state.side=side;let ok=false;outer:for(let r=0;r<SIZE;r++)for(let c=0;c<SIZE;c++){if(!isPiece(r,c,side))continue;if(legalMovesFor(r,c,'move').length||legalMovesFor(r,c,'push').length||legalMovesFor(r,c,'wall').length){ok=true;break outer;}}state.side=saved;return ok;}
+  function canControl(){if(state.over)return false;if(localMode)return true;return mySide===state.side;}
+  function label(side){return state.names[side]||(side==='amber'?'Amber':'Slate');}
+  function log(msg){$('log').innerHTML=msg;}
+  function escapeHtml(s){return String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));}
+
   function setMode(m){
-    state.mode=m;state.selected=null;
-    ['move','push','wall'].forEach((k)=>{
-      const el=$('act-'+k);if(!el)return;
-      el.classList.toggle('on',k===m);
-      el.disabled = !canControl() || (k==='wall' && countWalls(state.side)>=MAX_WALLS);
-    });
+    state.mode=m; state.selected=null;
+    ['move','push','wall'].forEach(k=>{const el=$('act-'+k);if(!el)return;el.classList.toggle('on',k===m);el.disabled=!canControl()||(k==='wall'&&countWalls(state.side)>=MAX_WALLS);});
     render();
   }
-  function canControl(){
-    if(state.over) return false;
-    if(localMode) return true;
-    return mySide === state.side;
-  }
-  function log(msg){ $('log').innerHTML = msg; }
-  function label(side){ return state.names[side] || (side==='amber'?'Amber':'Slate'); }
 
-  function snapshot() {
-    return {
-      grid: packGrid(state.grid),
-      turn: state.turn,
-      side: state.side,
-      over: state.over,
-      msg: $('log').textContent || '',
-      updatedAt: Date.now()
-    };
+  function snapshot(){return{grid:packGrid(state.grid),turn:state.turn,side:state.side,over:state.over,msg:$('log').textContent||'',updatedAt:Date.now()};}
+  async function pushState(){if(localMode||!roomRef||applyingRemote)return;try{await roomRef.child('game').set(snapshot());}catch(e){toast('Sync failed');}}
+
+  function endTurn(){
+    state.selected=null; state.turn+=1;
+    const a=countPieces('amber'), s=countPieces('slate');
+    if(a===0||s===0){finish(a===0?'slate':'amber','All opposing pieces captured.');return;}
+    if(state.turn>=MAX_TURNS){finish(null,'Turn limit reached.');return;}
+    state.side=state.side==='amber'?'slate':'amber';
+    if(!anyLegal(state.side)){log('<strong>'+escapeHtml(label(state.side))+'</strong> skips.');state.side=state.side==='amber'?'slate':'amber';if(!anyLegal(state.side)){finish(null,'Neither side can act.');return;}}
+    setMode(state.mode); log('<strong>'+escapeHtml(label(state.side))+'</strong> to play.'); render(); pushState();
   }
 
-  async function pushState() {
-    if (localMode || !roomRef || applyingRemote) return;
-    try {
-      await roomRef.child('game').set(snapshot());
-    } catch (e) {
-      console.warn(e);
-      toast('Sync failed — check connection');
-    }
-  }
-
-  function endTurn() {
-    state.selected = null;
-    state.turn += 1;
-    const a = countPieces('amber'), s = countPieces('slate');
-    if (a === 0 || s === 0) {
-      finish(a === 0 ? 'slate' : 'amber', 'All opposing pieces captured.');
-      return;
-    }
-    if (state.turn >= MAX_TURNS) {
-      finish(null, 'Turn limit reached.');
-      return;
-    }
-    state.side = state.side === 'amber' ? 'slate' : 'amber';
-    if (!anyLegal(state.side)) {
-      log('<strong>' + label(state.side) + '</strong> has no moves and skips.');
-      state.side = state.side === 'amber' ? 'slate' : 'amber';
-      if (!anyLegal(state.side)) {
-        finish(null, 'Neither side can act.');
-        return;
-      }
-    }
-    setMode(state.mode);
-    log('<strong>' + label(state.side) + '</strong> to play.');
-    render();
-    pushState();
-  }
-
-  function finish(winnerForced, reason) {
-    state.over = true;
-    const sa = scoreSide('amber'), ss = scoreSide('slate');
-    let winner = winnerForced;
-    if (!winner) {
-      if (sa > ss) winner = 'amber';
-      else if (ss > sa) winner = 'slate';
-      else winner = 'draw';
-    }
-    let title = 'Draw', body = reason + ' Final Amber ' + sa + ' — Slate ' + ss + '.';
-    if (winner === 'amber') { title = label('amber') + ' wins'; body = reason + ' Amber ' + sa + ' · Slate ' + ss + '.'; }
-    if (winner === 'slate') { title = label('slate') + ' wins'; body = reason + ' Slate ' + ss + ' · Amber ' + sa + '.'; }
-    $('end-title').textContent = title;
-    $('end-body').textContent = body;
-    $('s-end').classList.add('on');
-    render();
-    pushState();
-    if (roomRef && !localMode) {
-      roomRef.child('status').set('done').catch(()=>{});
+  function finish(winnerForced, reason){
+    state.over=true;
+    const sa=scoreSide('amber'), ss=scoreSide('slate');
+    let winner=winnerForced;
+    if(!winner){ if(sa>ss)winner='amber'; else if(ss>sa)winner='slate'; else winner='draw'; }
+    let title='Draw', body=reason+' Final Amber '+sa+' — Slate '+ss+'.';
+    if(winner==='amber'){title=label('amber')+' wins'; body=reason+' '+sa+' – '+ss;}
+    if(winner==='slate'){title=label('slate')+' wins'; body=reason+' '+ss+' – '+sa;}
+    $('end-title').textContent=title; $('end-body').textContent=body; modal('s-end',true);
+    render(); pushState();
+    if(roomRef&&!localMode) roomRef.child('status').set('done').catch(()=>{});
+    // XP only for online non-local, and only for self
+    if(!localMode && mySide){
+      if(winner==='draw'){ const st=loadStats(user.uid); st.xp+=20; saveStats(user.uid,st); syncStatsCloud(st); }
+      else grantMatchResult(winner===mySide);
     }
   }
 
-  function applyMove(from,to){ state.grid[to.r][to.c]=state.grid[from.r][from.c]; state.grid[from.r][from.c]=null; log('<strong>'+label(state.side)+'</strong> moved.'); endTurn(); }
+  function applyMove(from,to){state.grid[to.r][to.c]=state.grid[from.r][from.c];state.grid[from.r][from.c]=null;log('<strong>'+escapeHtml(label(state.side))+'</strong> moved.');endTurn();}
   function applyPush(from,enemy,dr,dc){
-    const br=enemy.r+dr, bc=enemy.c+dc; const enemyPiece=cell(enemy.r,enemy.c);
-    if(isEmpty(br,bc)){ state.grid[br][bc]=enemyPiece; state.grid[enemy.r][enemy.c]=state.grid[from.r][from.c]; state.grid[from.r][from.c]=null; log('<strong>'+label(state.side)+'</strong> pushed.'); }
-    else { state.grid[enemy.r][enemy.c]=state.grid[from.r][from.c]; state.grid[from.r][from.c]=null; log('<strong>'+label(state.side)+'</strong> captured!'); toast('Captured!'); }
+    const br=enemy.r+dr,bc=enemy.c+dc,ep=cell(enemy.r,enemy.c);
+    if(isEmpty(br,bc)){state.grid[br][bc]=ep;state.grid[enemy.r][enemy.c]=state.grid[from.r][from.c];state.grid[from.r][from.c]=null;log('<strong>'+escapeHtml(label(state.side))+'</strong> pushed.');}
+    else{state.grid[enemy.r][enemy.c]=state.grid[from.r][from.c];state.grid[from.r][from.c]=null;log('<strong>'+escapeHtml(label(state.side))+'</strong> captured!');toast('Captured!');}
     endTurn();
   }
-  function applyWall(from,at){ state.grid[at.r][at.c]={type:'wall',side:state.side}; log('<strong>'+label(state.side)+'</strong> built a wall.'); endTurn(); }
+  function applyWall(from,at){state.grid[at.r][at.c]={type:'wall',side:state.side};log('<strong>'+escapeHtml(label(state.side))+'</strong> built a wall.');endTurn();}
 
   function onCellClick(r,c){
-    if(state.over) return;
-    if(!canControl()){ toast("Opponent's turn"); return; }
+    if(state.over)return;
+    if(!canControl()){toast("Opponent's turn");return;}
     if(!state.selected){
-      if(!isPiece(r,c,state.side)){ toast('Select your piece'); return; }
-      if(!legalMovesFor(r,c,state.mode).length){ toast('No legal '+state.mode); return; }
-      state.selected={r,c}; render(); return;
+      if(!isPiece(r,c,state.side)){toast('Select your piece');return;}
+      if(!legalMovesFor(r,c,state.mode).length){toast('No legal '+state.mode);return;}
+      state.selected={r,c};render();return;
     }
-    if(state.selected.r===r&&state.selected.c===c){ state.selected=null; render(); return; }
+    if(state.selected.r===r&&state.selected.c===c){state.selected=null;render();return;}
     const legals=legalMovesFor(state.selected.r,state.selected.c,state.mode);
     const hit=legals.find(x=>x.r===r&&x.c===c);
-    if(!hit){
-      if(isPiece(r,c,state.side)){ state.selected={r,c}; render(); return; }
-      toast('Illegal'); return;
-    }
-    if(hit.kind==='move') applyMove(state.selected,hit);
-    else if(hit.kind==='push') applyPush(state.selected,hit,hit.dr,hit.dc);
-    else if(hit.kind==='wall') applyWall(state.selected,hit);
+    if(!hit){if(isPiece(r,c,state.side)){state.selected={r,c};render();return;}toast('Illegal');return;}
+    if(hit.kind==='move')applyMove(state.selected,hit);
+    else if(hit.kind==='push')applyPush(state.selected,hit,hit.dr,hit.dc);
+    else if(hit.kind==='wall')applyWall(state.selected,hit);
   }
 
   function render(){
@@ -565,63 +614,51 @@
       if(legalSet.has(r+','+c))div.classList.add('legal');
       const x=cell(r,c);
       if(x&&x.type==='wall')div.classList.add('wall');
-      else if(x&&x.type==='piece'){ const p=document.createElement('div'); p.className='piece '+x.side; div.appendChild(p); }
+      else if(x&&x.type==='piece'){const p=document.createElement('div');p.className='piece '+x.side;div.appendChild(p);}
       div.onclick=()=>onCellClick(r,c); board.appendChild(div);
     }
     $('score-amber').textContent=String(scoreSide('amber'));
     $('score-slate').textContent=String(scoreSide('slate'));
-    $('meta-amber').textContent=(state.names.amber||'Amber')+' · '+countPieces('amber')+' pcs · '+countWalls('amber')+' walls';
-    $('meta-slate').textContent=(state.names.slate||'Slate')+' · '+countPieces('slate')+' pcs · '+countWalls('slate')+' walls';
+    $('who-amber').innerHTML=escapeHtml(state.names.amber||'Amber')+(state.levels.amber?(' <span class="lvl-pill">Lv '+state.levels.amber+'</span>'):'');
+    $('who-slate').innerHTML=escapeHtml(state.names.slate||'Slate')+(state.levels.slate?(' <span class="lvl-pill">Lv '+state.levels.slate+'</span>'):'');
+    $('meta-amber').textContent=countPieces('amber')+' pieces · '+countWalls('amber')+' walls'+(mySide==='amber'?' · you':'');
+    $('meta-slate').textContent=countPieces('slate')+' pieces · '+countWalls('slate')+' walls'+(mySide==='slate'?' · you':'');
+    $('card-amber').querySelector('.name').textContent='Amber'+(mySide==='amber'?' · you':(mySide==='slate'?' · opponent':''));
+    $('card-slate').querySelector('.name').textContent='Slate'+(mySide==='slate'?' · you':(mySide==='amber'?' · opponent':''));
     $('turn-num').textContent=String(Math.min(state.turn+1,MAX_TURNS));
     $('card-amber').classList.toggle('active',!state.over&&state.side==='amber');
     $('card-slate').classList.toggle('active',!state.over&&state.side==='slate');
-    ['move','push','wall'].forEach((k)=>{
-      const el=$('act-'+k); if(!el)return;
-      el.disabled=!canControl()||(k==='wall'&&countWalls(state.side)>=MAX_WALLS);
-    });
-    if(roomCode) $('room-code-show').textContent=roomCode;
-    $('you-label').textContent = localMode ? 'Local hotseat' : ('You: '+(mySide?label(mySide):'—')+(user?' ('+user.name+')':''));
-    $('net-dot').classList.toggle('off', !localMode && !online);
-    $('net-label').textContent = localMode ? 'Local' : (online ? 'Online' : 'Offline');
+    if(roomCode)$('room-code-show').textContent=roomCode;
+    $('net-label').textContent=localMode?'Local hotseat':(online?'Online':'Offline');
   }
 
-  function makeCode(){
-    const chars='ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
-    let s=''; for(let i=0;i<6;i++) s+=chars[Math.floor(Math.random()*chars.length)];
-    return s;
-  }
-
-  function inviteUrl(code){
-    const u=new URL(location.href);
-    u.searchParams.set('room', code);
-    return u.toString();
-  }
+  function makeCode(){const chars='ABCDEFGHJKLMNPQRSTUVWXYZ23456789';let s='';for(let i=0;i<6;i++)s+=chars[Math.floor(Math.random()*chars.length)];return s;}
+  function inviteUrl(code){const u=new URL(location.href);u.searchParams.set('room',code);return u.toString();}
 
   async function createRoom(){
     if(!fbDb||!user) return toast('Not signed in');
     const code=makeCode();
+    const title=($('room-title').value||(user.name+"'s room")).trim().slice(0,28);
+    const st=loadStats(user.uid);
     const ref=fbDb.ref('bastionRooms/'+code);
     const snap={
-      hostUid:user.uid, hostName:user.name,
-      guestUid:null, guestName:null,
-      status:'waiting', createdAt:Date.now(),
-      game:null
+      hostUid:user.uid, hostName:user.name, hostLevel:levelFromXp(st.xp),
+      guestUid:null, guestName:null, guestLevel:null,
+      status:'waiting', public:!!publicOn, title: publicOn?title:null,
+      createdAt:Date.now(), game:null
     };
-    try {
+    try{
       await ref.set(snap);
       roomCode=code; roomRef=ref; mySide='amber'; localMode=false;
-      state.names.amber=user.name;
+      state.names.amber=user.name; state.levels.amber=levelFromXp(st.xp);
       $('wait-code').textContent=code;
+      $('wait-public-note').textContent=publicOn?'Listed in public servers':'Private room — share code/link only';
       $('wait-status').textContent='Waiting for opponent…';
-      show('s-wait');
+      modal('s-create',false); modal('s-wait',true);
       listenRoom();
-      // presence
       ref.child('hostOnline').onDisconnect().set(false);
       ref.child('hostOnline').set(true);
-    } catch(e){
-      console.error(e);
-      toast('Could not create room. Check Firebase rules.');
-    }
+    }catch(e){console.error(e);toast('Create failed — check Firebase rules');}
   }
 
   async function joinRoom(code){
@@ -629,211 +666,185 @@
     if(code.length<4) return toast('Enter a valid code');
     if(!fbDb||!user) return toast('Not signed in');
     const ref=fbDb.ref('bastionRooms/'+code);
-    const snap=await ref.once('value');
-    const val=snap.val();
+    const snap=await ref.once('value'); const val=snap.val();
     if(!val) return toast('Room not found');
-    if(val.status==='done') return toast('That match already ended');
+    if(val.status==='done') return toast('Match already ended');
     if(val.guestUid && val.guestUid!==user.uid) return toast('Room is full');
-    if(val.hostUid===user.uid){ toast("You're the host — share the code"); return; }
-    try {
-      await ref.update({ guestUid:user.uid, guestName:user.name, status:'playing' });
+    if(val.hostUid===user.uid) return toast("You're the host of this room");
+    const st=loadStats(user.uid);
+    try{
+      await ref.update({
+        guestUid:user.uid, guestName:user.name, guestLevel:levelFromXp(st.xp),
+        status:'playing', public:false // remove from public list when full
+      });
       roomCode=code; roomRef=ref; mySide='slate'; localMode=false;
-      state.names.slate=user.name;
-      state.names.amber=val.hostName||'Amber';
-      // Host should start game state if missing
-      if(!val.game){
-        // guest triggers start if host already waiting — host listener will also init
-      }
+      state.names.slate=user.name; state.levels.slate=levelFromXp(st.xp);
+      state.names.amber=val.hostName||'Amber'; state.levels.amber=val.hostLevel||1;
       ref.child('guestOnline').onDisconnect().set(false);
       ref.child('guestOnline').set(true);
       listenRoom();
+      modal('s-join',false);
       startOnlineMatch(val);
-    } catch(e){
-      console.error(e);
-      toast('Join failed. Check Firebase rules.');
-    }
+    }catch(e){console.error(e);toast('Join failed — check Firebase rules');}
   }
 
   function startOnlineMatch(roomVal){
     applyingRemote=true;
-    if(roomVal && roomVal.game){
-      applyRemoteGame(roomVal.game);
-    } else {
+    if(roomVal&&roomVal.game) applyRemoteGame(roomVal.game);
+    else {
       state.grid=freshGrid(); state.turn=0; state.side='amber'; state.mode='move'; state.selected=null; state.over=false;
-      if(mySide==='amber' || (roomVal && roomVal.hostUid===user.uid)){
-        applyingRemote=false;
-        pushState();
-      }
+      if(mySide==='amber'){ applyingRemote=false; pushState(); }
     }
     applyingRemote=false;
-    showGame(true);
-    ['s-auth','s-lobby','s-join','s-wait'].forEach(s=>$(s).classList.remove('on'));
+    showGame(true); showScreen(''); modal('s-wait',false); modal('s-join',false); modal('s-create',false);
+    $('s-lobby').classList.remove('on'); $('s-auth').classList.remove('on');
     setMode('move');
-    log('Online match · you are <strong>'+label(mySide)+'</strong>.');
+    log('vs <strong>'+escapeHtml(mySide==='amber'?state.names.slate:state.names.amber)+'</strong> · you are <strong>'+escapeHtml(label(mySide))+'</strong>');
     render();
   }
 
   function applyRemoteGame(g){
-    if(!g) return;
-    state.grid=unpackGrid(g.grid);
-    state.turn=g.turn||0;
-    state.side=g.side||'amber';
-    state.over=!!g.over;
-    state.selected=null;
+    if(!g)return;
+    state.grid=unpackGrid(g.grid); state.turn=g.turn||0; state.side=g.side||'amber'; state.over=!!g.over; state.selected=null;
     if(g.msg) log(escapeHtml(g.msg));
     if(state.over){
       const sa=scoreSide('amber'), ss=scoreSide('slate');
-      let title='Draw', body='Match over. Amber '+sa+' — Slate '+ss+'.';
-      if(sa>ss){title=label('amber')+' wins'; body='Amber '+sa+' · Slate '+ss+'.';}
-      if(ss>sa){title=label('slate')+' wins'; body='Slate '+ss+' · Amber '+sa+'.';}
-      $('end-title').textContent=title; $('end-body').textContent=body; $('s-end').classList.add('on');
+      let title='Draw', body='Amber '+sa+' — Slate '+ss;
+      if(sa>ss){title=label('amber')+' wins';body=sa+' – '+ss;}
+      if(ss>sa){title=label('slate')+' wins';body=ss+' – '+sa;}
+      $('end-title').textContent=title; $('end-body').textContent=body; modal('s-end',true);
     }
     render();
   }
-  function escapeHtml(s){ return String(s).replace(/[&<>"']/g,c=>({ '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;' }[c])); }
 
   function listenRoom(){
-    if(roomUnsub){ try{ roomRef.off(); }catch(_){ } roomUnsub=null; }
     if(!roomRef) return;
+    try{roomRef.off();}catch(_){}
     online=true;
-    roomRef.on('value', (snap)=>{
+    roomRef.on('value',(snap)=>{
       const val=snap.val();
-      if(!val){
-        toast('Room closed');
-        leaveRoom(true);
-        return;
-      }
+      if(!val){ toast('Room closed'); leaveRoom(); return; }
       online=true;
       if(val.hostName) state.names.amber=val.hostName;
       if(val.guestName) state.names.slate=val.guestName;
-
-      // Host sees guest join
+      if(val.hostLevel) state.levels.amber=val.hostLevel;
+      if(val.guestLevel) state.levels.slate=val.guestLevel;
       if(mySide==='amber' && val.status==='playing' && val.guestUid){
         if($('s-wait').classList.contains('on')){
           startOnlineMatch(val);
-          // ensure initial game written
-          if(!val.game){ pushState(); }
+          if(!val.game) pushState();
         }
       }
-      if(val.game){
-        applyingRemote=true;
-        applyRemoteGame(val.game);
-        applyingRemote=false;
-      }
+      if(val.game){ applyingRemote=true; applyRemoteGame(val.game); applyingRemote=false; }
       render();
-    }, (err)=>{ console.warn(err); online=false; render(); });
-    roomUnsub=true;
+    },()=>{online=false;render();});
   }
 
-  async function leaveRoom(silent){
-    showGame(false);
-    if(roomRef && user){
-      try {
-        if(mySide==='amber') await roomRef.remove();
-        else await roomRef.update({ guestUid:null, guestName:null, status:'waiting' });
-      } catch(_){}
-      try{ roomRef.off(); }catch(_){}
+  async function leaveRoom(){
+    showGame(false); modal('s-end',false); modal('s-wait',false);
+    if(roomRef&&user){
+      try{ if(mySide==='amber') await roomRef.remove(); else await roomRef.update({guestUid:null,guestName:null,guestLevel:null,status:'waiting',public:false}); }catch(_){}
+      try{roomRef.off();}catch(_){}
     }
     roomRef=null; roomCode=null; mySide=null; localMode=false; online=false;
-    if(!silent) show('s-lobby');
-    else show('s-lobby');
+    showScreen('s-lobby'); refreshPublicList();
   }
 
-  // Auth
-  function setUser(uid, name, isGuest){
-    user={ uid, name, isGuest:!!isGuest };
-    try{ localStorage.setItem('bastion_user', JSON.stringify(user)); }catch(_){}
-    $('lobby-hello').textContent='Playing as '+name;
-    show('s-lobby');
+  function setupLocal(){
+    localMode=true; online=false; roomCode=null; mySide=null;
+    state.grid=freshGrid(); state.turn=0; state.side='amber'; state.mode='move'; state.selected=null; state.over=false;
+    state.names={amber:(user&&user.name)||'Player 1', slate:'Player 2'};
+    state.levels={amber:user?levelFromXp(loadStats(user.uid).xp):1, slate:1};
+    showGame(true); showScreen(''); $('s-lobby').classList.remove('on');
+    setMode('move'); log('Local hotseat. <strong>Amber</strong> starts.'); render();
   }
 
+  function refreshPublicList(){
+    const box=$('public-list');
+    if(!fbDb){ box.innerHTML='<div class="public-empty">Sign in to see public servers</div>'; return; }
+    box.innerHTML='<div class="public-empty">Loading…</div>';
+    fbDb.ref('bastionRooms').orderByChild('public').equalTo(true).limitToLast(30).once('value').then(snap=>{
+      const val=snap.val()||{};
+      const rows=[];
+      Object.keys(val).forEach(code=>{
+        const r=val[code];
+        if(!r||!r.public||r.status!=='waiting'||r.guestUid) return;
+        rows.push({code, title:r.title||(r.hostName+"'s room"), host:r.hostName||'Host', level:r.hostLevel||1, at:r.createdAt||0});
+      });
+      rows.sort((a,b)=>b.at-a.at);
+      if(!rows.length){ box.innerHTML='<div class="public-empty">No public rooms open — create one</div>'; return; }
+      box.innerHTML='';
+      rows.forEach(r=>{
+        const div=document.createElement('div'); div.className='room-row';
+        div.innerHTML='<div class="rinfo"><div class="rtitle">'+escapeHtml(r.title)+'</div><div class="rmeta">Host '+escapeHtml(r.host)+' · Lv '+r.level+' · '+r.code+'</div></div>';
+        const btn=document.createElement('button'); btn.className='join-btn'; btn.textContent='Join'; btn.type='button';
+        btn.onclick=()=>joinRoom(r.code);
+        div.appendChild(btn); box.appendChild(div);
+      });
+    }).catch(()=>{ box.innerHTML='<div class="public-empty">Could not load rooms</div>'; });
+  }
+
+  // Auth UI
+  function setUser(uid,name,isGuest){
+    user={uid,name,isGuest:!!isGuest};
+    try{localStorage.setItem('bastion_user',JSON.stringify(user));}catch(_){}
+    refreshProfile(); showScreen('s-lobby'); refreshPublicList();
+  }
   $('btn-google').onclick=async()=>{
-    if(!initFirebase()) return toast('Firebase failed to load');
+    if(!initFirebase()) return toast('Firebase failed');
     try{
       const provider=new firebase.auth.GoogleAuthProvider();
       const res=await fbAuth.signInWithPopup(provider);
-      const name=(res.user.displayName||res.user.email||'Player').split(' ')[0].slice(0,16);
-      setUser(res.user.uid, name, false);
-    }catch(e){
-      console.warn(e);
-      toast('Google sign-in failed');
-    }
+      setUser(res.user.uid,(res.user.displayName||'Player').split(' ')[0].slice(0,16),false);
+    }catch(e){toast('Google sign-in failed');}
   };
   $('btn-guest').onclick=()=>{
-    if(!initFirebase()) return toast('Firebase failed to load');
+    if(!initFirebase()) return toast('Firebase failed');
     const name=($('guest-name').value||'').trim().replace(/[^\w\- ]/g,'').slice(0,16);
-    if(name.length<3) return toast('Username at least 3 characters');
-    const uid='guest_'+name.toLowerCase()+'_'+Math.random().toString(36).slice(2,8);
-    // anonymous auth optional — use synthetic uid for guest rooms
-    fbAuth.signInAnonymously().then((cred)=>{
-      setUser(cred.user.uid, name, true);
-    }).catch(()=>{
-      setUser(uid, name, true);
-    });
+    if(name.length<3) return toast('Username min 3 characters');
+    fbAuth.signInAnonymously().then(cred=>setUser(cred.user.uid,name,true)).catch(()=>setUser('guest_'+Math.random().toString(36).slice(2),name,true));
   };
-  $('btn-signout').onclick=async()=>{
-    try{ if(fbAuth) await fbAuth.signOut(); }catch(_){}
-    user=null; try{ localStorage.removeItem('bastion_user'); }catch(_){}
-    show('s-auth');
-  };
+  $('btn-signout').onclick=async()=>{try{if(fbAuth)await fbAuth.signOut();}catch(_){} user=null; try{localStorage.removeItem('bastion_user');}catch(_){} showScreen('s-auth');};
 
-  $('btn-create').onclick=()=>createRoom();
-  $('btn-join-open').onclick=()=>{ show('s-join'); $('join-code').value=''; };
-  $('join-back').onclick=()=>show('s-lobby');
+  $('btn-create').onclick=()=>{ publicOn=false; $('sw-public').classList.remove('on'); $('room-title-field').style.display='none'; $('room-title').value=(user?user.name+"'s room":'Room'); modal('s-create',true); };
+  $('sw-public').onclick=()=>{ publicOn=!publicOn; $('sw-public').classList.toggle('on',publicOn); $('room-title-field').style.display=publicOn?'block':'none'; };
+  $('create-cancel').onclick=()=>modal('s-create',false);
+  $('create-go').onclick=()=>createRoom();
+  $('btn-join-open').onclick=()=>{ modal('s-join',true); $('join-code').value=''; };
+  $('join-back').onclick=()=>modal('s-join',false);
   $('join-go').onclick=()=>joinRoom($('join-code').value);
   $('btn-local').onclick=()=>setupLocal();
-  $('btn-lobby-help').onclick=()=>$('s-help').classList.add('on');
-  $('btn-help').onclick=()=>$('s-help').classList.add('on');
-  $('help-close').onclick=()=>$('s-help').classList.remove('on');
-  $('end-help').onclick=()=>$('s-help').classList.add('on');
-  $('end-lobby').onclick=()=>{ $('s-end').classList.remove('on'); leaveRoom(); };
+  $('btn-lobby-help').onclick=()=>modal('s-help',true);
+  $('btn-help').onclick=()=>modal('s-help',true);
+  $('help-close').onclick=()=>modal('s-help',false);
+  $('end-lobby').onclick=()=>{ modal('s-end',false); leaveRoom(); };
   $('btn-leave').onclick=()=>leaveRoom();
   $('wait-cancel').onclick=()=>leaveRoom();
+  $('btn-refresh-public').onclick=()=>refreshPublicList();
   $('btn-copy-link').onclick=()=>{
     const url=inviteUrl($('wait-code').textContent);
-    if(navigator.clipboard&&navigator.clipboard.writeText){
-      navigator.clipboard.writeText(url).then(()=>toast('Invite link copied')).catch(()=>prompt('Copy link:', url));
-    } else prompt('Copy link:', url);
+    if(navigator.clipboard) navigator.clipboard.writeText(url).then(()=>toast('Link copied')).catch(()=>prompt('Copy',url));
+    else prompt('Copy',url);
   };
   $('btn-invite').onclick=()=>{
-    if(!roomCode) return toast('No online room');
+    if(!roomCode) return toast('No room');
     const url=inviteUrl(roomCode);
-    if(navigator.clipboard&&navigator.clipboard.writeText){
-      navigator.clipboard.writeText(url).then(()=>toast('Invite link copied')).catch(()=>prompt('Copy:', url));
-    } else prompt('Copy:', url);
+    if(navigator.clipboard) navigator.clipboard.writeText(url).then(()=>toast('Link copied')).catch(()=>prompt('Copy',url));
+    else prompt('Copy',url);
   };
+  $('act-move').onclick=()=>{if(canControl())setMode('move');};
+  $('act-push').onclick=()=>{if(canControl())setMode('push');};
+  $('act-wall').onclick=()=>{if(canControl())setMode('wall');};
 
-  $('act-move').onclick=()=>{ if(canControl()) setMode('move'); };
-  $('act-push').onclick=()=>{ if(canControl()) setMode('push'); };
-  $('act-wall').onclick=()=>{ if(canControl()) setMode('wall'); };
-
-  // boot
   state.grid=emptyGrid();
   initFirebase();
-  // deep link ?room=CODE
   const params=new URLSearchParams(location.search);
   const deep=params.get('room');
   try{
     const saved=JSON.parse(localStorage.getItem('bastion_user')||'null');
-    if(saved&&saved.uid&&saved.name){
-      user=saved;
-      $('lobby-hello').textContent='Playing as '+user.name;
-      if(deep){ show('s-join'); $('join-code').value=deep; }
-      else show('s-lobby');
-    } else {
-      show('s-auth');
-      if(deep) toast('Sign in to join room '+deep);
-    }
-  }catch(_){ show('s-auth'); }
-
-  if(fbAuth){
-    fbAuth.onAuthStateChanged((u)=>{
-      if(u && !user){
-        const name=(u.displayName||'Player').split(' ')[0].slice(0,16);
-        setUser(u.uid, name, u.isAnonymous);
-      }
-    });
-  }
+    if(saved&&saved.uid&&saved.name){ user=saved; refreshProfile(); showScreen('s-lobby'); refreshPublicList(); if(deep){ modal('s-join',true); $('join-code').value=deep; } }
+    else { showScreen('s-auth'); if(deep) toast('Sign in to join '+deep); }
+  }catch(_){ showScreen('s-auth'); }
 })();
 </script>
 </body>
