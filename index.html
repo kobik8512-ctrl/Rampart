@@ -431,8 +431,12 @@
       </ul>
       <h2>Actions</h2>
       <ul>
-        <li>Move — one step · Push — shove/capture · Wall — block (max 5)</li>
+        <li><strong>Move</strong> — one step to an empty square (up/down/left/right)</li>
+        <li><strong>Push</strong> — stand next to an enemy, choose Push, tap the enemy. If the square behind them is empty they slide. If behind is a wall, the edge of the board, or any piece — they are <strong>captured (killed)</strong>.</li>
+        <li><strong>Wall</strong> — place a blocker on an adjacent empty square (max 5)</li>
       </ul>
+      <h2>How to kill</h2>
+      <p>Push enemies into the edge or into a wall. Trap them so they have nowhere to slide — that removes their piece.</p>
       <h2>Levels</h2>
       <p>Win = +40 XP · Loss = +12 XP · Level up every 100 XP.</p>
       <h2>Public servers</h2>
@@ -613,7 +617,7 @@
     if(!canControl()){toast("Opponent's turn");return;}
     if(!state.selected){
       if(!isPiece(r,c,state.side)){toast('Select your piece');return;}
-      if(!legalMovesFor(r,c,state.mode).length){toast('No legal '+state.mode);return;}
+      if(!legalMovesFor(r,c,state.mode).length){toast(state.mode==='push'?'No enemy beside this piece to push':'No legal '+state.mode);return;}
       state.selected={r,c};render();return;
     }
     if(state.selected.r===r&&state.selected.c===c){state.selected=null;render();return;}
@@ -809,24 +813,37 @@
     setMode('move'); log('Local hotseat. <strong>Amber</strong> starts.'); render();
   }
 
+  function paintPublicRows(rows){
+    const box=$('public-list');
+    if(!rows.length){
+      box.innerHTML='<div class="public-empty">No public rooms open — create one with Public ON</div>';
+      return;
+    }
+    box.innerHTML='';
+    rows.forEach(function(r){
+      const div=document.createElement('div'); div.className='room-row';
+      div.innerHTML='<div class="rinfo"><div class="rtitle">'+escapeHtml(r.title)+'</div><div class="rmeta">Host '+escapeHtml(r.host)+' · Lv '+r.level+' · '+r.code+'</div></div>';
+      const btn=document.createElement('button'); btn.className='join-btn'; btn.textContent='Join'; btn.type='button';
+      btn.onclick=function(){ joinRoom(r.code); };
+      div.appendChild(btn); box.appendChild(div);
+    });
+  }
+
   function refreshPublicList(){
     const box=$('public-list');
     if(!fbDb){ box.innerHTML='<div class="public-empty">Sign in to see public servers</div>'; return; }
+    if(!user){ box.innerHTML='<div class="public-empty">Sign in to see public servers</div>'; return; }
     box.innerHTML='<div class="public-empty">Loading…</div>';
-    // Client filter (no index required). Also mirrors to public index node when creating.
-    Promise.all([
-      fbDb.ref('bastionRooms').limitToLast(50).once('value'),
-      fbDb.ref('bastionPublic').limitToLast(40).once('value')
-    ]).then(function(results){
-      const val=results[0].val()||{};
-      const pub=results[1].val()||{};
-      const rows=[];
-      const seen={};
+
+    function collect(val, pub){
+      val=val||{}; pub=pub||{};
+      const rows=[]; const seen={};
       function add(code, r){
-        if(!r||seen[code]) return;
+        if(!code||!r||seen[code]) return;
         if(r.guestUid) return;
         if(r.status && r.status!=='waiting') return;
-        if(r.public!==true && !pub[code]) return;
+        const isPub = r.public===true || !!pub[code];
+        if(!isPub) return;
         seen[code]=1;
         rows.push({
           code: code,
@@ -836,19 +853,30 @@
           at: r.createdAt||0
         });
       }
-      Object.keys(pub).forEach(function(code){ add(code, val[code]||pub[code]); });
+      Object.keys(pub).forEach(function(code){ add(code, val[code] || pub[code]); });
       Object.keys(val).forEach(function(code){ add(code, val[code]); });
-      rows.sort(function(a,b){ return b.at-a.at; });
-      if(!rows.length){ box.innerHTML='<div class="public-empty">No public rooms open — create one</div>'; return; }
-      box.innerHTML='';
-      rows.forEach(function(r){
-        const div=document.createElement('div'); div.className='room-row';
-        div.innerHTML='<div class="rinfo"><div class="rtitle">'+escapeHtml(r.title)+'</div><div class="rmeta">Host '+escapeHtml(r.host)+' · Lv '+r.level+' · '+r.code+'</div></div>';
-        const btn=document.createElement('button'); btn.className='join-btn'; btn.textContent='Join'; btn.type='button';
-        btn.onclick=function(){ joinRoom(r.code); };
-        div.appendChild(btn); box.appendChild(div);
+      rows.sort(function(a,b){ return b.at - a.at; });
+      return rows;
+    }
+
+    // Prefer light public index; fall back to rooms scan. Never hard-fail both silently.
+    fbDb.ref('bastionPublic').once('value').then(function(pubSnap){
+      const pub = pubSnap.val() || {};
+      return fbDb.ref('bastionRooms').once('value').then(function(roomSnap){
+        paintPublicRows(collect(roomSnap.val(), pub));
+      }).catch(function(){
+        // rooms denied — still show public index alone
+        paintPublicRows(collect({}, pub));
       });
-    }).catch(function(){ box.innerHTML='<div class="public-empty">Could not load rooms</div>'; });
+    }).catch(function(err){
+      console.warn('bastionPublic', err);
+      fbDb.ref('bastionRooms').once('value').then(function(roomSnap){
+        paintPublicRows(collect(roomSnap.val(), {}));
+      }).catch(function(err2){
+        console.warn('bastionRooms', err2);
+        box.innerHTML='<div class="public-empty">Could not load rooms (Firebase rules). Publish rules for bastionPublic + bastionRooms.</div>';
+      });
+    });
   }
 
   // Auth UI
@@ -932,7 +960,7 @@
     else prompt('Copy',url);
   };
   $('act-move').onclick=()=>{if(canControl())setMode('move');};
-  $('act-push').onclick=()=>{if(canControl())setMode('push');};
+  $('act-push').onclick=()=>{setMode('push'); toast('Push: select your piece, then the enemy beside it');};
   $('act-wall').onclick=()=>{if(canControl())setMode('wall');};
 
   state.grid=emptyGrid();
